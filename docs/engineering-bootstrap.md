@@ -71,4 +71,6 @@ git status
 
 ## Security and hygiene
 
+At final verification, Docker Desktop was present and launch was requested, but `docker info` still reported an unavailable engine after 30 seconds; this remains a host-level manual follow-up.
+
 The repository ignores environment files, credentials, private keys, Terraform state, virtual environments, build output, and OS/editor artifacts. No credentials, account IDs, or private material belong in these documents.
