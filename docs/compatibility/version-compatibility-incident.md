@@ -13,7 +13,11 @@ Terraform should reject the incompatible constraint before initialization change
 See the recorded command output below.
 
 ```text
-PENDING_COMMAND_OUTPUT
+$ terraform -chdir=docs/compatibility/initial-run init -backend=false
+Error: Unsupported Terraform Core version
+This configuration does not support Terraform version 1.14.3.
+required_version = ">= 99.0.0"
+exit status: 1
 ```
 
 ## INVESTIGATION
@@ -30,7 +34,14 @@ The constraint was corrected to `>= 1.14.0, < 2.0.0` in `main.tf.corrected`.
 
 ## VERIFICATION
 
-The corrected configuration was initialized with `terraform init -backend=false`; actual output is recorded after the command is run.
+The corrected configuration was initialized with `terraform init -backend=false` and succeeded:
+
+```text
+$ terraform -chdir=docs/compatibility/corrected-run init -backend=false
+Initializing provider plugins...
+Terraform has been successfully initialized!
+exit status: 0
+```
 
 ## PREVENTION
 
