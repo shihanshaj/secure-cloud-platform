@@ -1,0 +1,7 @@
+# Snapshot of the working toolchain; update deliberately, then retest.
+git 2.54.0
+python 3.13.0
+docker 28.5.1
+terraform 1.14.3
+kubectl 1.34.1
+kind MISSING
