@@ -1,0 +1,11 @@
+flowchart TD
+    subgraph Healthy
+      H[Host] -->|localhost:8080| N[Nginx :80]
+      N -->|Docker DNS: api:8000| A[API :0.0.0.0:8000]
+      A --> E[GET /health endpoint]
+    end
+    subgraph Broken
+      HB[Host] -->|localhost:8080| NB[Nginx :80]
+      NB -. connection refused / 502 .-> AB[API listening only on 127.0.0.1:8000]
+      AB --> LB[Reachable only in the API container]
+    end
