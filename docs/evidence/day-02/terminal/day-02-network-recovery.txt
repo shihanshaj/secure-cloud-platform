@@ -1,0 +1,16 @@
+$ docker run --rm --network day-02-linux-service-outage_service-net --entrypoint python day-02-linux-service-outage-api -c 'import socket,urllib.request; print("api resolves to",socket.gethostbyname("api")); print(urllib.request.urlopen("http://api:8000/health",timeout=3).read().decode())'
+api resolves to 172.20.0.2
+{"status":"healthy"}
+[exit status: 0]
+
+$ docker compose exec -T api python -c 'import urllib.request; print(urllib.request.urlopen("http://127.0.0.1:8000/health",timeout=2).read().decode())'
+{"status":"healthy"}
+[exit status: 0]
+
+$ docker compose exec -T api python -c 'rows=open("/proc/net/tcp").read().splitlines()[1:]; print("\\n".join(r for r in rows if r.split()[1].endswith(":1F40") and r.split()[3]=="0A"))'
+   0: 00000000:1F40 00000000:0000 0A 00000000:00000000 00:00000000 00000000     0        0 7550 1 00000000618d55df 100 0 0 10 0
+[exit status: 0]
+
+$ docker network inspect day-02-linux-service-outage_service-net --format '{{range .Containers}}{{.Name}} {{.IPv4Address}}{{"\\n"}}{{end}}'
+day-02-linux-service-outage-nginx-1 172.20.0.3/16\nday-02-linux-service-outage-api-1 172.20.0.2/16\n
+[exit status: 0]

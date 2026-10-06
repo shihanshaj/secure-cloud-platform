@@ -1,0 +1,13 @@
+$ make doctor
+[captured UTC: 2026-10-06T16:43:53Z]
+[OK] git — git version 2.54.0 (Apple Git-157)
+[OK] python3 — Python 3.13.0
+[OK] docker — Docker version 28.5.1, build e180ab8
+[OK] terraform — Terraform v1.14.3
+[OK] kubectl — Client Version: v1.34.1
+[MISSING] kind
+[OK] docker-engine — daemon available
+Doctor found one or more missing/unusable requirements.
+make: *** [doctor] Error 1
+
+[exit status: 2]

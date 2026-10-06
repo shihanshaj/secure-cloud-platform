@@ -1,0 +1,15 @@
+$ terraform -chdir=docs/compatibility/initial-run init -backend=false
+[captured UTC: 2026-10-06T16:43:55Z]
+[31m╷[0m[0m
+[31m│[0m [0m[1m[31mError: [0m[0m[1mUnsupported Terraform Core version[0m
+[31m│[0m [0m
+[31m│[0m [0m[0m  on main.tf line 2, in terraform:
+[31m│[0m [0m   2:   [4mrequired_version = ">= 99.0.0"[0m[0m
+[31m│[0m [0m
+[31m│[0m [0mThis configuration does not support Terraform version 1.14.3. To proceed,
+[31m│[0m [0meither choose another supported Terraform version or update this version
+[31m│[0m [0mconstraint. Version constraints are normally set for good reason, so
+[31m│[0m [0mupdating the constraint may lead to other errors or unexpected behavior.
+[31m╵[0m[0m
+
+[exit status: 1]

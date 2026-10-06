@@ -1,0 +1,23 @@
+$ curl -v --max-time 2 http://localhost:8000/health
+* Host localhost:8000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:8000...
+* connect to ::1 port 8000 from ::1 port 54813 failed: Connection refused
+*   Trying 127.0.0.1:8000...
+* connect to 127.0.0.1 port 8000 from 127.0.0.1 port 54814 failed: Connection refused
+* Failed to connect to localhost port 8000 after 1 ms: Couldn't connect to server
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+* Closing connection
+curl: (7) Failed to connect to localhost port 8000 after 1 ms: Couldn't connect to server
+[curl exit status: 7; connection refusal is expected]
+
+$ docker inspect day-02-linux-service-outage-api-1 --format '{{json .NetworkSettings.Ports}}'
+{"8000/tcp":null}
+[exit status: 0]
+
+$ docker inspect day-02-linux-service-outage-nginx-1 --format '{{json .NetworkSettings.Ports}}'
+{"80/tcp":[{"HostIp":"127.0.0.1","HostPort":"8080"}]}
+[exit status: 0]

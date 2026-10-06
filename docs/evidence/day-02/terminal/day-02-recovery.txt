@@ -1,0 +1,43 @@
+# Capture formatting: curl progress redraws are shown as separate lines; terminal padding is trimmed. HTTP/body values and status are unchanged.
+
+$ curl -i --fail http://localhost:8080/health
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+100    20  100    20    0     0   1823      0 --:--:-- --:--:-- --:--:--  2000
+HTTP/1.1 200 OK
+Server: nginx/1.27.5
+Date: Tue, 06 Oct 2026 16:50:35 GMT
+Content-Type: application/json
+Content-Length: 20
+Connection: keep-alive
+x-request-id: e1cbc9576be7fe9383f7f9de7c30c2f1
+
+{"status":"healthy"}
+[exit status: 0]
+
+$ docker compose ps
+NAME                                  IMAGE                             COMMAND                  SERVICE   CREATED         STATUS                   PORTS
+day-02-linux-service-outage-api-1     day-02-linux-service-outage-api   "sh -c 'exec uvicorn…"   api       5 minutes ago   Up 5 minutes (healthy)   8000/tcp
+day-02-linux-service-outage-nginx-1   nginx:1.27-alpine                 "/docker-entrypoint.…"   nginx     5 minutes ago   Up 5 minutes             127.0.0.1:8080->80/tcp
+[exit status: 0]
+
+$ docker compose logs --no-color --tail=8 api nginx
+nginx-1  | 10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
+nginx-1  | 10-listen-on-ipv6-by-default.sh: info: Enabled listen on IPv6 in /etc/nginx/conf.d/default.conf
+nginx-1  | /docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
+nginx-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+nginx-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+nginx-1  | /docker-entrypoint.sh: Configuration complete; ready for start up
+nginx-1  | 172.20.0.1 - - [06/Oct/2026:16:44:50 +0000] "GET /health HTTP/1.1" 200 20 "-" "curl/8.7.1"
+api-1    | {"timestamp":"2026-10-06T16:50:02.146810+00:00","level":"info","message":"request_completed","request_id":"80f70bdf-9141-4846-8aec-2875ce7941f1","method":"GET","path":"/health","status_code":200,"duration_ms":0.18}
+api-1    | {"timestamp":"2026-10-06T16:50:07.438588+00:00","level":"info","message":"request_completed","request_id":"a5f5ac2d-35d1-4f0b-a12c-a16929f870e5","method":"GET","path":"/health","status_code":200,"duration_ms":0.19}
+api-1    | {"timestamp":"2026-10-06T16:50:12.723652+00:00","level":"info","message":"request_completed","request_id":"3aadbb13-b6b6-4d32-b3b8-6399c41e6496","method":"GET","path":"/health","status_code":200,"duration_ms":0.26}
+api-1    | {"timestamp":"2026-10-06T16:50:18.005303+00:00","level":"info","message":"request_completed","request_id":"f6bf0bae-e517-4ebc-9247-059941ad3f2a","method":"GET","path":"/health","status_code":200,"duration_ms":0.18}
+api-1    | {"timestamp":"2026-10-06T16:50:23.296863+00:00","level":"info","message":"request_completed","request_id":"6d19daa6-ff9c-4fdb-8df2-842d957fa3e0","method":"GET","path":"/health","status_code":200,"duration_ms":0.19}
+api-1    | {"timestamp":"2026-10-06T16:50:28.584058+00:00","level":"info","message":"request_completed","request_id":"0a8f56af-1115-43a0-a160-479f3095df95","method":"GET","path":"/health","status_code":200,"duration_ms":0.22}
+api-1    | {"timestamp":"2026-10-06T16:50:33.876555+00:00","level":"info","message":"request_completed","request_id":"50960369-d217-46a5-9aff-1c27b7b01d01","method":"GET","path":"/health","status_code":200,"duration_ms":0.21}
+api-1    | {"timestamp":"2026-10-06T16:50:35.147524+00:00","level":"info","message":"request_completed","request_id":"e1cbc9576be7fe9383f7f9de7c30c2f1","method":"GET","path":"/health","status_code":200,"duration_ms":0.66}
+nginx-1  | 172.20.0.1 - - [06/Oct/2026:16:50:35 +0000] "GET /health HTTP/1.1" 200 20 "-" "curl/8.7.1"
+[exit status: 0]

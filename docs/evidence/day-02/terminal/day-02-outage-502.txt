@@ -1,0 +1,173 @@
+# Day-2 controlled outage — captured terminal excerpts
+Experiment timestamp (UTC): 2026-10-06T15:55:39Z
+Source: the saved output of the actual approved local experiment. ANSI styling and unrelated sections were removed; runtime output below is copied from that capture. The shown commands are the commands used in the recorded run (the listener/port commands are summarized inline only where the original capture emitted them as part of a multi-command shell block). No output was generated or simulated for this excerpt.
+
+$ API_HOST=127.0.0.1 docker compose up -d --force-recreate api
+Actual runtime output: the API container was recreated and started (see the captured Compose state below).
+
+## Host → Nginx response
+$ curl -v --max-time 5 http://localhost:8080/health
+--- Host to Nginx ---
+* Host localhost:8080 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+*   Trying [::1]:8080...
+* connect to ::1 port 8080 from ::1 port 54485 failed: Connection refused
+*   Trying 127.0.0.1:8080...
+* Connected to localhost (127.0.0.1) port 8080
+> GET /health HTTP/1.1
+> Host: localhost:8080
+> User-Agent: curl/8.7.1
+> Accept: */*
+>
+* Request completely sent off
+< HTTP/1.1 502 Bad Gateway
+< Server: nginx/1.27.5
+< Date: Tue, 06 Oct 2026 15:55:47 GMT
+< Content-Type: text/html
+< Content-Length: 157
+< Connection: keep-alive
+<
+<html>
+<head><title>502 Bad Gateway</title></head>
+<body>
+<center><h1>502 Bad Gateway</h1></center>
+<hr><center>nginx/1.27.5</center>
+</body>
+</html>
+* Connection #0 to host localhost left intact
+
+## Compose state
+$ docker compose ps -a
+--- Compose state ---
+NAME                                  IMAGE                             COMMAND
+                 SERVICE   CREATED         STATUS                   PORTS
+day-02-linux-service-outage-api-1     day-02-linux-service-outage-api   "sh -c '
+exec uvicorn…"   api       9 seconds ago   Up 7 seconds (healthy)   8000/tcp
+day-02-linux-service-outage-nginx-1   nginx:1.27-alpine                 "/docker
+-entrypoint.…"   nginx     9 minutes ago   Up 8 minutes             127.0.0.1:80
+80->80/tcp
+
+## Nginx logs
+$ docker compose logs --no-color --tail=30 nginx
+--- Nginx evidence ---
+nginx-1  | /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attem
+pt to perform configuration
+nginx-1  | /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoin
+t.d/
+nginx-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ip
+v6-by-default.sh
+nginx-1  | 10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/n
+ginx/conf.d/default.conf
+nginx-1  | 10-listen-on-ipv6-by-default.sh: info: Enabled listen on IPv6 in /etc
+/nginx/conf.d/default.conf
+nginx-1  | /docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolve
+rs.envsh
+nginx-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-
+templates.sh
+nginx-1  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-
+processes.sh
+nginx-1  | /docker-entrypoint.sh: Configuration complete; ready for start up
+nginx-1  | 172.20.0.1 - - [06/Oct/2026:15:46:59 +0000] "GET /health HTTP/1.1" 20
+0 20 "-" "curl/8.7.1"
+nginx-1  | 2026/10/06 15:55:47 [error] 30#30: *3 connect() failed (111: Connecti
+on refused) while connecting to upstream, client: 172.20.0.1, server: _, request
+: "GET /health HTTP/1.1", upstream: "http://172.20.0.2:8000/health", host: "loca
+lhost:8080"
+nginx-1  | 172.20.0.1 - - [06/Oct/2026:15:55:47 +0000] "GET /health HTTP/1.1" 50
+2 157 "-" "curl/8.7.1"
+
+## API logs
+$ docker compose logs --no-color --tail=30 api
+--- API evidence ---
+api-1  | INFO:     Started server process [1]
+api-1  | INFO:     Waiting for application startup.
+api-1  | {"timestamp":"2026-10-06T15:55:41.910236+00:00","level":"info","message
+":"application_started"}
+api-1  | INFO:     Application startup complete.
+api-1  | INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to qui
+t)
+api-1  | {"timestamp":"2026-10-06T15:55:46.031658+00:00","level":"info","message
+":"request_completed","request_id":"de87a746-0f43-4ec0-9796-3006afe234c4","metho
+d":"GET","path":"/health","status_code":200,"duration_ms":0.45}
+
+## API self-check
+$ docker compose exec -T api python -c 'import urllib.request; print(urllib.request.urlopen("http://127.0.0.1:8000/health",timeout=2).read().decode())'
+--- API container to itself ---
+{"status":"healthy"}
+
+## Listener table
+$ docker compose exec -T api python -c 'rows=open("/proc/net/tcp").read().splitlines()[1:]; print("\\n".join(r for r in rows if r.split()[1].endswith(":1F40") and r.split()[3]=="0A") or "no TCP/8000 listener"); print("Expected loopback encoding 0100007F:1F40; wildcard encoding 00000000:1F40")'
+--- Listener from /proc/net/tcp ---
+   0: 0100007F:1F40 00000000:0000 0A 00000000:00000000 00:00000000 00000000
+0        0 21532 1 00000000902d0480 100 0 0 10 0
+Expected loopback encoding 0100007F:1F40; wildcard encoding 00000000:1F40
+
+## Network-peer request
+$ docker run --rm --network day-02-linux-service-outage_service-net --entrypoint python day-02-linux-service-outage-api -c 'import urllib.request; print(urllib.request.urlopen("http://api:8000/health",timeout=2).read().decode())' 2>&1
+--- Temporary network-peer to api:8000 ---
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/urllib/request.py", line 1357, in do_open
+    h.request(req.get_method(), req.selector, req.data, headers,
+  File "/usr/local/lib/python3.12/http/client.py", line 1386, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+  File "/usr/local/lib/python3.12/http/client.py", line 1432, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+  File "/usr/local/lib/python3.12/http/client.py", line 1381, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+  File "/usr/local/lib/python3.12/http/client.py", line 1141, in _send_output
+    self.send(msg)
+  File "/usr/local/lib/python3.12/http/client.py", line 1085, in send
+    self.connect()
+  File "/usr/local/lib/python3.12/http/client.py", line 1051, in connect
+    self.sock = self._create_connection(
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/socket.py", line 865, in create_connection
+    raise exceptions[0]
+  File "/usr/local/lib/python3.12/socket.py", line 850, in create_connection
+    sock.connect(sa)
+ConnectionRefusedError: [Errno 111] Connection refused
+During handling of the above exception, another exception occurred:
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/usr/local/lib/python3.12/urllib/request.py", line 215, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/urllib/request.py", line 515, in open
+    response = self._open(req, data)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/urllib/request.py", line 532, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/urllib/request.py", line 492, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/urllib/request.py", line 1386, in http_open
+    return self.do_open(http.client.HTTPConnection, req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/urllib/request.py", line 1360, in do_open
+    raise URLError(err)
+urllib.error.URLError: <urlopen error [Errno 111] Connection refused>
+
+## Port mappings
+$ docker inspect day-02-linux-service-outage-api-1 --format 'api={{json .NetworkSettings.Ports}}'; docker inspect day-02-linux-service-outage-nginx-1 --format 'nginx={{json .NetworkSettings.Ports}}'
+--- Container ports ---
+api={"8000/tcp":null}
+nginx={"80/tcp":[{"HostIp":"127.0.0.1","HostPort":"8080"}]}
+
+## Direct host backend probe
+$ curl --max-time 2 -v http://localhost:8000/health 2>&1
+--- Host direct backend attempt ---
+* Host localhost:8000 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+*   Trying [::1]:8000...
+* connect to ::1 port 8000 from ::1 port 54487 failed: Connection refused
+*   Trying 127.0.0.1:8000...
+* connect to 127.0.0.1 port 8000 from 127.0.0.1 port 54488 failed: Connection re
+fused
+* Failed to connect to localhost port 8000 after 0 ms: Couldn't connect to serve
+r
+* Closing connection
+curl: (7) Failed to connect to localhost port 8000 after 0 ms: Couldn't connect
+to server

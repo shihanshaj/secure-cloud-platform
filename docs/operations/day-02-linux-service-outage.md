@@ -100,12 +100,12 @@ Only the local lab's `/health` request through Nginx failed during the controlle
 ```sh
 docker run --rm --network day-02-linux-service-outage_service-net \
   --entrypoint python day-02-linux-service-outage-api -c \
-  'import socket,urllib.request; print(socket.gethostbyname("api")); print(urllib.request.urlopen("http://api:8000/health",timeout=2).read())'
+  'import urllib.request; print(urllib.request.urlopen("http://api:8000/health",timeout=2).read().decode())'
 ```
 
 **Why:** Use a disposable container on the same Compose network rather than installing diagnostic tools in the Nginx image.
 
-**Observation:** Docker DNS resolved `api` to `172.20.0.2`; the connection to port 8000 was refused.
+**Observation:** The request to hostname `api` failed at TCP connect with `ConnectionRefusedError (111)`, not with a DNS error. The Nginx error log named upstream `172.20.0.2`; Docker network inspection mapped the API container to that address.
 
 **What this ruled in/out:** Compose service-name DNS worked. A separate network namespace reproduced the connection failure.
 
@@ -144,7 +144,7 @@ docker inspect day-02-linux-service-outage-nginx-1 --format '{{json .NetworkSett
 
 | Hypothesis | Evidence for | Evidence against | Verdict |
 |---|---|---|---|
-| H1 — Nginx cannot resolve service name `api` | Nginx reported an upstream connection error | Nginx logged upstream IP `172.20.0.2`; diagnostic peer resolved `api` to that IP | Rejected |
+| H1 — Nginx cannot resolve service name `api` | Nginx reported an upstream connection error | Nginx logged upstream IP `172.20.0.2`; the diagnostic request using hostname `api` failed at TCP connect, not name resolution | Rejected |
 | H2 — API is not running | Nginx receives connection refusal | Compose showed `Up (healthy)`; Uvicorn completed startup; self-request returned healthy | Rejected |
 | H3 — API listens on the wrong interface | Nginx peer connection refused while self-request succeeds | Uvicorn announced `127.0.0.1:8000`; `/proc/net/tcp` showed `0100007F:1F40` | Confirmed; root cause |
 | H4 — Nginx targets the wrong port | Upstream connection fails | Nginx configuration and error log target port 8000; listener is on port 8000 | Rejected |

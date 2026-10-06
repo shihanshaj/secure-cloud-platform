@@ -1,0 +1,9 @@
+$ docker compose config --quiet
+[exit status: 0]
+
+$ ../../scripts/verify-day-02-service.sh
+Health response: {"status":"healthy"}
+HTTP status: 200
+API container port bindings: {"8000/tcp":null}
+API port 8000 is not published to the host.
+[exit status: 0]

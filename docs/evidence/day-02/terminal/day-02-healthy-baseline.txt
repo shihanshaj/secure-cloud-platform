@@ -1,0 +1,64 @@
+$ docker compose up -d --build
+[captured UTC: 2026-10-06T16:44:40Z]
+#1 [internal] load local bake definitions
+#1 reading from stdin 701B done
+#1 DONE 0.0s
+
+#2 [internal] load build definition from Dockerfile
+#2 transferring dockerfile: 363B done
+#2 DONE 0.0s
+
+#3 [internal] load metadata for docker.io/library/python:3.12-slim
+#3 DONE 2.2s
+
+#4 [internal] load .dockerignore
+#4 transferring context: 2B done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 64B done
+#5 DONE 0.0s
+
+#6 [1/5] FROM docker.io/library/python:3.12-slim@sha256:05cda9777409a9c3ffddd94a4c476b79f0769a0b4857f0c7ed9226b6800b0d6f
+#6 resolve docker.io/library/python:3.12-slim@sha256:05cda9777409a9c3ffddd94a4c476b79f0769a0b4857f0c7ed9226b6800b0d6f 0.0s done
+#6 DONE 0.0s
+
+#7 [4/5] RUN pip install --no-cache-dir -r requirements.txt
+#7 CACHED
+
+#8 [2/5] WORKDIR /srv/app
+#8 CACHED
+
+#9 [3/5] COPY requirements.txt ./requirements.txt
+#9 CACHED
+
+#10 [5/5] COPY main.py ./main.py
+#10 CACHED
+
+#11 exporting to image
+#11 exporting layers done
+#11 exporting manifest sha256:ade82057bf39c94fa611dddd61eb2685ece690b8dd5a7d18980ab6f4364143d0 done
+#11 exporting config sha256:d2f044797543f337e2fbcde4428a0f5689a25d6edf59b9605b98cf6530fc22b9 done
+#11 exporting attestation manifest sha256:adcf2542292a7d96435c092432d24fdcbfc970c7379023075010e95cfc1d39b5 done
+#11 exporting manifest list sha256:83a12d1e8052d89ff8eb5c76af19df8cdf68ddd2eaa6250a828a9e415d66e651 done
+#11 naming to docker.io/library/day-02-linux-service-outage-api:latest done
+#11 unpacking to docker.io/library/day-02-linux-service-outage-api:latest done
+#11 DONE 0.0s
+
+#12 resolving provenance for metadata file
+#12 DONE 0.0s
+ day-02-linux-service-outage-api  Built
+ Network day-02-linux-service-outage_service-net  Creating
+ Network day-02-linux-service-outage_service-net  Created
+ Container day-02-linux-service-outage-api-1  Creating
+ Container day-02-linux-service-outage-api-1  Created
+ Container day-02-linux-service-outage-nginx-1  Creating
+ Container day-02-linux-service-outage-nginx-1  Created
+ Container day-02-linux-service-outage-api-1  Starting
+ Container day-02-linux-service-outage-api-1  Started
+ Container day-02-linux-service-outage-api-1  Waiting
+ Container day-02-linux-service-outage-api-1  Healthy
+ Container day-02-linux-service-outage-nginx-1  Starting
+ Container day-02-linux-service-outage-nginx-1  Started
+
+[exit status: 0]
